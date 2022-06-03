@@ -1,0 +1,115 @@
+//10번보드의 코드
+
+#include <ESP8266WiFi.h>
+#include <espnow.h>
+#include <SPI.h> 
+#include <LoRa.h>
+
+//920.9Mhz
+const long frequency = 9209E5;
+
+byte board[] = {0x84,0xCC,0xA8,0xAE,0xBB,0xED};
+unsigned long t = 0;
+
+char mydata[] = "나는 보드 2번입니다!";
+
+void setup() {
+  // put your setup code here, to run once:
+
+  Serial.begin(115200);
+
+  LoRa.setPins(D10, D9, D3);
+  if (!LoRa.begin(frequency)) {
+    Serial.println("LoRa init failed. Check your connections.");
+    while (true);                       // if failed, do nothing
+  }
+  LoRa.onReceive(onReceive);
+  LoRa.onTxDone(onTxDone);
+  LoRa_rxMode();
+  
+  WiFi.mode(WIFI_STA); //제일 처음 할일! 와이파이모드를 스테이션 모드로!
+
+  //ESPNOW의 기능을 활성화한다!
+  if (esp_now_init() != 0) {
+    //ESP NOW 시작 실패!
+    Serial.println("ESPNOW 실패!");
+    return;
+  }else{
+     //ESP NOW 시작 성공!
+     Serial.println("ESPNOW 성공!");
+  }
+
+  //지금 이보드의 역할은 주고 받는것을 다하겠다!
+  esp_now_set_self_role(ESP_NOW_ROLE_COMBO);
+
+  //나의 슬레이브를 등록해야겠다!
+  esp_now_add_peer(board, ESP_NOW_ROLE_COMBO, 1, NULL, 0);//뒤에 2개는 ID, PW
+
+  //송신완료 콜백함수 등록
+  esp_now_register_send_cb(OnDataSent);
+
+  //수신완료 콜백 함수 등록
+  esp_now_register_recv_cb(OnDataRecv);
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  /*
+  if(millis() - t > 2000){
+    t = millis();
+    //2초마다 한번씩 하겠다!
+    esp_now_send(board, (uint8_t *) &mydata, sizeof(mydata));
+  }
+  */
+}
+
+//송신콜백함수 원형:
+void OnDataSent(uint8_t *mac, uint8_t status) {
+   //status가 0일때 송신 완료!
+   if(status == 0){
+      Serial.println("성공적으로 송신했음!");
+   }else{
+      Serial.println("송신 실패!!");
+   }
+}
+
+
+//수신콜백함수 원형:                //byte data[]
+void OnDataRecv(uint8_t * mac, uint8_t * data, uint8_t len) {
+  LoRa_txMode();
+  LoRa.beginPacket();
+  //LoRa.print(message);
+  for(int i = 0;i<len;i++){
+    LoRa.write(data[i]);
+  }
+  LoRa.endPacket(true);
+}
+
+void LoRa_rxMode(){
+  LoRa.enableInvertIQ();                // active invert I and Q signals
+  LoRa.receive();                       // set receive mode
+}
+
+void LoRa_txMode(){
+  LoRa.idle();                          // set standby mode
+  LoRa.disableInvertIQ();               // normal mode
+}
+
+void onReceive(int packetSize) {
+  String message = "";
+
+  while (LoRa.available()) {
+    message += (char)LoRa.read();
+  }
+
+  Serial.print("Node Receive: ");
+  Serial.println(message);
+  //message
+  //ESPNOW로 A쪽으로 전송하기
+  esp_now_send(board, (uint8_t *) message.c_str(), message.length());
+}
+
+void onTxDone() {
+  Serial.println("TxDone");
+  LoRa_rxMode();
+}
