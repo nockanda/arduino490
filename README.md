@@ -51,7 +51,7 @@ A,B,C보드 3개가 있고 A와 B는 ESPNOW로 연결되고 B와 C는 LoRa로 �
   
   (Machine translation)
 
-It is Nokanda's ESPNOW series!<BR>
+It is Nockanda's ESPNOW series!<BR>
 In this episode, the topic of converting information collected with ESPNOW to LoRa is the subject!<BR>
 I think it would be enough to implement an example with about 3 boards!<BR>
 A board and B board are connected by ESPNOW!<BR>
@@ -77,7 +77,7 @@ There are 3 boards A, B, and C, A and B are connected with ESPNOW, and B and C a
 
 5.When there are 2 int type variables and 2 float type variables, send from A to B, then from B to C, and then let C transmit to the smartphone in JSON format!
 
-6.Transmit the string sent by Nokanda from the smartphone to C using MQTT, from C to B to LoRa, and from B to A to ESPNOW, and print the number on A's serial monitor screen!
+6.Transmit the string sent by Nockanda from the smartphone to C using MQTT, from C to B to LoRa, and from B to A to ESPNOW, and print the number on A's serial monitor screen!
 
 7.When there are 4 LEDs on board A, try to control them individually by the command sent from board C! (10=No.1 LED/OFF, 21=No.2 LED/ON)
 
